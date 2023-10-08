@@ -12,35 +12,59 @@ export default class ColumnChart {
         this.element = this.createElement();
     }
 
+    labelTemplate() {
+        return `
+            Total ${this.label}
+        `;
+    }
+
+    linkTemplate() {
+        return `
+            ${this.link ? `<a class="column-chart__link" href="${this.link}">View all</a>` : ''}
+        `;
+    }
+
+    valueTemplate() {
+        return `
+            <div data-element="header" class="column-chart__header">
+                ${this.formatHeading ? this.formatHeading(this.value) : this.value}
+            </div>
+        `;
+    }
+
+    columnsTemplate() {
+        return `
+            <div data-element="body" class="column-chart__chart">
+                ${this.columnProps?.length ? this.columnProps.map(this.columnTemplate).join('\n') : ''}
+            </div>
+        `;
+    }
+
+    columnTemplate(prop) {
+        return `
+            <div style="--value: ${prop.value}" data-tooltip="${prop.percent}"></div>
+        `;
+    }
+
     template() {
         return `
             <div class="column-chart__title">
-                Total ${this.label}
-                ${this.link ? `<a class="column-chart__link" href="${this.link}">View all</a>` : ''}
+                ${this.labelTemplate()}
+                ${this.linkTemplate()}
             </div>
             <div class="column-chart__container">
-                <div data-element="header" class="column-chart__header">
-                    ${this.formatHeading ? this.formatHeading(this.value) : this.value}
-                </div>
-                <div data-element="body" class="column-chart__chart">
-                    ${this.columnProps && this.columnProps.length
-                        ? this.columnProps.map(
-                            prop => `<div style="--value: ${prop.value}" data-tooltip="${prop.percent}"></div>`
-                          ).join('\n')
-                        : ''
-                    }
-                </div>
+                ${this.valueTemplate()}
+                ${this.columnsTemplate()}
             </div>
         `;
     }
 
     createElement() {
         const element = document.createElement('div');
-        element.classList.add('column-chart')
-        if (!this.columnProps || !this.columnProps.length) {
-            element.classList.add('column-chart_loading');
-        }
         element.style.setProperty('--chart-height', this.chartHeight);
+        element.className = !this.columnProps?.length
+            ? 'column-chart column-chart_loading'
+            : 'column-chart';
 
         element.innerHTML = this.template();
 
@@ -54,17 +78,11 @@ export default class ColumnChart {
     update(columnProps) {
         this.columnProps = this.getColumnProps(columnProps);
 
-        const container = this.element.parentNode;
-
-        if (container) {
-            this.destroy();
-
-            this.element = this.createElement();
-    
-            this.render(container);
-        } else {
-            this.element = this.createElement();
-        }
+        const template = Object.assign(document.createElement('template'), {
+            innerHTML: this.columnsTemplate(),
+        })
+        
+        this.element.querySelector('.column-chart__chart').replaceWith(template);
     }
 
     remove() {
