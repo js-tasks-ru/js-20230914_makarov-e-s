@@ -1,6 +1,5 @@
 export default class NotificationMessage {
 
-    static timer;
     static lastElement;
 
     constructor(message, config) {
@@ -42,7 +41,7 @@ export default class NotificationMessage {
 
         this.render(document.body);
 
-        NotificationMessage.timer = setTimeout(() => {
+        this.timer = setTimeout(() => {
             this.destroy();
         }, this.duration);
     }
@@ -58,8 +57,8 @@ export default class NotificationMessage {
     }
 
     destroy() {
-        if (NotificationMessage.timer) {
-            clearTimeout(NotificationMessage.timer);
+        if (this.timer) {
+            clearTimeout(this.timer);
         }
         this.remove();
     }
