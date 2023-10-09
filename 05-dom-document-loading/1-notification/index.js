@@ -38,10 +38,6 @@ export default class NotificationMessage {
             NotificationMessage.lastElement.destroy();
         }
 
-        if (NotificationMessage.timer) {
-            clearTimeout(NotificationMessage.timer);
-        }
-
         this.element = element || this.element;
 
         this.render(document.body);
@@ -62,6 +58,9 @@ export default class NotificationMessage {
     }
 
     destroy() {
+        if (NotificationMessage.timer) {
+            clearTimeout(NotificationMessage.timer);
+        }
         this.remove();
     }
 }
