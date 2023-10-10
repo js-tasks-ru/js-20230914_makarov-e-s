@@ -1,9 +1,9 @@
 export default class NotificationMessage {
 
-    static lastElement;
+    static currentElement;
 
     constructor(message, config) {
-        this.message = message;
+        this.message = message || '';
         this.duration = config?.duration || 0;
         this.type = config?.type || '';
 
@@ -26,34 +26,28 @@ export default class NotificationMessage {
             <div class="inner-wrapper">
                 <div class="notification-header">${this.type}</div>
                 <div class="notification-body">
-                    ${this.message || ''}
+                    ${this.message}
                 </div>
             </div>
         `;
     }
 
-    show(element) {
-        if (NotificationMessage.lastElement) {
-            NotificationMessage.lastElement.destroy();
+    show(container = document.body) {
+        if (NotificationMessage.currentElement) {
+            NotificationMessage.currentElement.destroy();
         }
 
-        this.element = element || this.element;
-
-        this.render(document.body);
+        container.appendChild(this.element);
+        NotificationMessage.currentElement = this;
 
         this.timer = setTimeout(() => {
             this.destroy();
         }, this.duration);
     }
 
-    render(container) {
-        container.appendChild(this.element);
-        NotificationMessage.lastElement = this;
-    }
-
     remove() {
         this.element.remove();
-        NotificationMessage.lastElement = null;
+        NotificationMessage.currentElement = null;
     }
 
     destroy() {
