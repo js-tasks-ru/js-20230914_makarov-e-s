@@ -47,7 +47,6 @@ export default class NotificationMessage {
 
     remove() {
         this.element.remove();
-        NotificationMessage.currentElement = null;
     }
 
     destroy() {
@@ -55,5 +54,6 @@ export default class NotificationMessage {
             clearTimeout(this.timer);
         }
         this.remove();
+        NotificationMessage.currentElement = null;
     }
 }
