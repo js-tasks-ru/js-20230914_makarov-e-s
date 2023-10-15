@@ -1,26 +1,12 @@
 import * as SortableTableV1 from '../../05-dom-document-loading/2-sortable-table-v1/index.js';
 
-SortableTableV1.SortableTableHeaderCell.prototype.template = function () {
-  return `
-    <div class="sortable-table__cell" data-id="${this.id}" data-sortable="${this.sortable}" data-order="${this.order}">
-      <span>${this.title}</span>
-      ${this.sortable
-        ? ` <span data-element="arrow" class="sortable-table__sort-arrow">
-              <span class="sort-arrow"></span>
-            </span>`
-        : ''
-      }
-    </div>
-  `;
-};
-
 export default class SortableTable extends SortableTableV1.default {
   constructor(headersConfig, {
     data = [],
     sorted = {},
     isSortLocally = true,
   } = {}) {
-    super(headersConfig, data);
+    super(headersConfig, data, true);
 
     this.sorted = sorted;
     this.isSortLocally = isSortLocally;
@@ -54,18 +40,12 @@ export default class SortableTable extends SortableTableV1.default {
   setEventListeners(elements = this.subElements.header.children) {
     Array.from(elements).forEach((element) => {
       element.addEventListener('pointerdown', this.handleHeaderCellPointerdown);
-      if (elements.children?.length) {
-        setEventListeners(elements);
-      }
     });
   }
 
   removeEventListeners(elements = this.subElements.header.children) {
     Array.from(elements).forEach((element) => {
       element.removeEventListener('pointerdown', this.handleHeaderCellPointerdown);
-      if (elements.children?.length) {
-        removeEventListeners(elements);
-      }
     });
   }
 
@@ -73,12 +53,15 @@ export default class SortableTable extends SortableTableV1.default {
     const cell = event.target.closest('.sortable-table__cell');
     const fieldValue = cell.getAttribute('data-id');
     const orderValue = cell.getAttribute('data-order') === 'asc' ? 'desc' : 'asc';
+    const sortableValue = cell.getAttribute('data-sortable');
+
+    if (sortableValue && JSON.parse(sortableValue)) {
+      cell.setAttribute('data-order', orderValue);
+
+      this.setSort(fieldValue, orderValue);
   
-    cell.setAttribute('data-order', orderValue);
-
-    this.setSort(fieldValue, orderValue);
-
-    this.sort();
+      this.sort();
+    }
   }
 
   destroy() {

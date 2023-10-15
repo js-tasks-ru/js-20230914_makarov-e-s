@@ -1,9 +1,9 @@
 export default class SortableTable {
   subElements = {};
 
-  constructor(headerConfig = [], data = []) {
+  constructor(headerConfig = [], data = [], enableSort = false) {
     this.theadContent = headerConfig.map(item => 
-      new SortableTableHeaderCell({ ...item, template: null })
+      new SortableTableHeaderCell({ ...item, template: null, enableSort })
     );
     this.tbodyContent = data.map(item =>
       Object.assign(new SortableTableRow({...item, href: '#'}), {
@@ -162,7 +162,7 @@ class SortableTableCell {
   }
 }
 
-export class SortableTableHeaderCell extends SortableTableCell {
+class SortableTableHeaderCell extends SortableTableCell {
   constructor(data) {
     super(data);
 
@@ -170,15 +170,22 @@ export class SortableTableHeaderCell extends SortableTableCell {
     this.sortType = data?.sortType ?? 'string';
     this.sortable = data?.sortable ?? false;
     this.order = data?.order || 'asc';
+    this.enableSort = data?.enableSort || false;
 
     this.element = this.createElement();
   }
 
   template() {
     return `
-      <div class="sortable-table__cell" data-id="${this.id}" data-sortable="${this.sortable}">
+      <div class="sortable-table__cell" data-id="${this.id}" data-sortable="${this.sortable}" ${this.enableSort ? `data-order="${this.order}"` : ''}>
         <span>${this.title}</span>
+        ${this.sortable
+          ? ` <span data-element="arrow" class="sortable-table__sort-arrow">
+                <span class="sort-arrow"></span>
+              </span>`
+          : ''
+        }
       </div>
-    `; 
+    `;
   }
 }
