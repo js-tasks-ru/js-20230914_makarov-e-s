@@ -14,6 +14,7 @@ export default class SortableTable {
     );
     
     this.element = this.createElement();
+    this.subElements.header = this.element.querySelector('.sortable-table__header');
     this.subElements.body = this.element.querySelector('.sortable-table__body');
   }
 
@@ -57,7 +58,8 @@ export default class SortableTable {
 
   updateNode(selector, innerHTML) {
     this.element.querySelector(selector).innerHTML = innerHTML;
-    this.subElements.body = this.element.querySelector(selector);
+    this.subElements.header = this.element.querySelector('.sortable-table__header');
+    this.subElements.body = this.element.querySelector('.sortable-table__body');
   }
 
   render(container) {
@@ -160,13 +162,14 @@ class SortableTableCell {
   }
 }
 
-class SortableTableHeaderCell extends SortableTableCell {
+export class SortableTableHeaderCell extends SortableTableCell {
   constructor(data) {
     super(data);
 
     this.id = data?.id ?? '';
     this.sortType = data?.sortType ?? 'string';
     this.sortable = data?.sortable ?? false;
+    this.order = data?.order || 'asc';
 
     this.element = this.createElement();
   }
