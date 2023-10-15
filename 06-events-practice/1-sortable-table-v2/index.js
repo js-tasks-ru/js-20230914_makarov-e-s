@@ -53,7 +53,7 @@ export default class SortableTable extends SortableTableV1.default {
 
   setEventListeners(elements = this.subElements.header.children) {
     Array.from(elements).forEach((element) => {
-      element.addEventListener('pointerdown', this.pointerdownEventHandler);
+      element.addEventListener('pointerdown', this.handleHeaderCellPointerdown);
       if (elements.children?.length) {
         setEventListeners(elements);
       }
@@ -62,14 +62,14 @@ export default class SortableTable extends SortableTableV1.default {
 
   removeEventListeners(elements = this.subElements.header.children) {
     Array.from(elements).forEach((element) => {
-      element.removeEventListener('pointerdown', this.pointerdownEventHandler);
+      element.removeEventListener('pointerdown', this.handleHeaderCellPointerdown);
       if (elements.children?.length) {
         removeEventListeners(elements);
       }
     });
   }
 
-  pointerdownEventHandler = (event) => {
+  handleHeaderCellPointerdown = (event) => {
     const cell = event.target.closest('.sortable-table__cell');
     const fieldValue = cell.getAttribute('data-id');
     const orderValue = cell.getAttribute('data-order') === 'asc' ? 'desc' : 'asc';
