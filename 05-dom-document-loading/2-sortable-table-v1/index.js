@@ -1,21 +1,87 @@
-export default class SortableTable {
-  subElements = {};
+class BaseComponent {
+  render(container = document.body) {
+    container.appendChild(this.element);
+  }
+
+  remove() {
+    this.element.remove();
+  }
+
+  destroy() {
+    this.remove();
+  }
+
+  toString() {
+    return this.element.outerHTML;
+  }
+}
+
+export default class SortableTable extends BaseComponent {
+  #element;
+  subElements;
+
+  #loading = false;
+  #data = [];
+
+  set element(value) {
+    this.#element = value;
+    this.subElements = {
+      header: this.#element.querySelector('.sortable-table__header'),
+      body: this.#element.querySelector('.sortable-table__body'),
+      loadingLine: this.#element.querySelector('.sortable-table__loading-line'),
+      emptyPlaceholder: this.#element.querySelector('.sortable-table__empty-placeholder'),
+    };
+  }
+
+  get element() {
+    return this.#element;
+  }
+
+  set data(value) {
+    this.#data = value;
+    if (!this.subElements?.emptyPlaceholder) {
+      return;
+    }
+    if (!this.#data?.length && !this.loading) {
+      this.subElements.emptyPlaceholder.style.display = 'block';
+    } else {
+      this.subElements.emptyPlaceholder.style.display = 'none';
+    }
+  }
+
+  get data() {
+    return this.#data;
+  }
+
+  set loading(value) {
+    this.#loading = value;
+
+    if (!this.subElements?.loadingLine) {
+      return;
+    }
+
+    if (this.#loading) {
+      this.subElements.loadingLine.style.display = 'block';
+    } else {
+      this.subElements.loadingLine.style.display = 'none';
+    }
+  }
+
+  get loading() {
+    return this.#loading;
+  }
 
   constructor(headerConfig = [], data = [], enableSort = false) {
-    this.theadContent = headerConfig.map(item => 
-      new SortableTableHeaderCell({ ...item, template: null, enableSort })
-    );
-    this.tbodyContent = data.map(item =>
-      Object.assign(new SortableTableRow({...item, href: '#'}), {
-        children: headerConfig.map(
-          cell => new SortableTableCell({ title: item[cell.id], template: cell.template?.bind(null, item.images) })
-        )
-      })
-    );
+    super();
+
+    this.headerConfig = headerConfig;
+    this.data = data;
+    this.enableSort = enableSort;
+
+    this.theadContent = this.getTheadContent(headerConfig);
+    this.tbodyContent = this.getTbodyContent(data);
     
     this.element = this.createElement();
-    this.subElements.header = this.element.querySelector('.sortable-table__header');
-    this.subElements.body = this.element.querySelector('.sortable-table__body');
   }
 
   createElement() {
@@ -32,6 +98,15 @@ export default class SortableTable {
       </div>
       <div data-element="body" class="sortable-table__body">
         ${this.tbodyContent.join('\n')}
+      </div>
+
+      <div data-element="loading" class="loading-line sortable-table__loading-line" style="display: ${this.loading ? 'block' : 'none'}"></div>
+
+      <div data-element="emptyPlaceholder" class="sortable-table__empty-placeholder" style="display: ${this.data?.length ? 'none' : 'block'}">
+        <div>
+          <p>No products satisfies your filter criteria</p>
+          <button type="button" class="button-primary-outline">Reset all filters</button>
+        </div>
       </div>
     `;
   }
@@ -52,38 +127,32 @@ export default class SortableTable {
             ? b.children[index].title.localeCompare(a.children[index].title, options)
             : b.children[index].title - a.children[index].title
         );
-      this.updateNode('.sortable-table__body', this.tbodyContent.join('\n'));
+      this.subElements.body.innerHTML = this.tbodyContent.join('\n');
     }
   }
 
-  updateNode(selector, innerHTML) {
-    this.element.querySelector(selector).innerHTML = innerHTML;
-    this.subElements.header = this.element.querySelector('.sortable-table__header');
-    this.subElements.body = this.element.querySelector('.sortable-table__body');
+  getTheadContent(data) {
+    return data.map(item => 
+      new SortableTableHeaderCell({ ...item, template: null, enableSort: this.enableSort })
+    );
   }
 
-  render(container) {
-    container.appendChild(this.element);
-  }
-
-  remove() {
-    this.element.remove();
-  }
-
-  destroy() {
-    this.remove();
+  getTbodyContent(data) {
+    return data.map(item =>
+      new SortableTableRow({
+        ...item,
+        href: '#',
+        children: this.headerConfig.map(
+          cell => new SortableTableCell({ title: item[cell.id], template: cell.template?.bind(null, item.images) })
+        )
+      })
+    );
   }
 }
 
 
-class SortableTableRow {
+class SortableTableRow extends BaseComponent {
   #children = [];
-
-  constructor (data) {
-    this.href = data.href;
-
-    this.element = this.createElement();
-  }
 
   set children(data) {
     this.#children = Array.isArray ? data : [];
@@ -93,10 +162,23 @@ class SortableTableRow {
     return this.#children;
   }
 
+  constructor (data) {
+    super();
+
+    this.href = data.href;
+    this.children = data.children;
+
+    this.element = this.createElement();
+  }
+
   createElement() {
-    return Object.assign(document.createElement('template'), {
+    const element = Object.assign(document.createElement('template'), {
       innerHTML: this.template(),
     }).content.firstElementChild;
+    
+    this.children.forEach(child => element.appendChild(child.element));
+
+    return element;
   }
 
   template() {
@@ -104,28 +186,12 @@ class SortableTableRow {
       <a href="${this.href}" class="sortable-table__row"></a>
     `;
   }
-
-  render(container) {
-    container.appendChild(this.element);
-  }
-
-  remove() {
-    this.element.remove();
-  }
-
-  destroy() {
-    this.remove();
-  }
-
-  toString() {
-    return Object.assign(this.element.cloneNode(), {
-      innerHTML: this.children.join('\n')
-    }).outerHTML;
-  }
 }
 
-class SortableTableCell {
+class SortableTableCell extends BaseComponent {
   constructor (data) {
+    super();
+
     this.title = data?.title ?? '';
 
     this.template = data?.template ?? this.template;
@@ -143,22 +209,6 @@ class SortableTableCell {
     return `
       <div class="sortable-table__cell">${this.title}</div>
     `;
-  }
-
-  render(container) {
-    container.appendChild(this.element);
-  }
-
-  remove() {
-    this.element.remove();
-  }
-
-  destroy() {
-    this.remove();
-  }
-
-  toString() {
-    return this.element.outerHTML;
   }
 }
 

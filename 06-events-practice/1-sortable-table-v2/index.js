@@ -1,19 +1,23 @@
-import * as SortableTableV1 from '../../05-dom-document-loading/2-sortable-table-v1/index.js';
+import SortableTableV1 from '../../05-dom-document-loading/2-sortable-table-v1/index.js';
 
-export default class SortableTable extends SortableTableV1.default {
+export default class SortableTable extends SortableTableV1 {
   constructor(headersConfig, {
     data = [],
     sorted = {},
     isSortLocally = true,
+    url = null,
+    offset = 30,
   } = {}) {
     super(headersConfig, data, true);
 
     this.sorted = sorted;
     this.isSortLocally = isSortLocally;
-
-    this.setEventListeners();
+    this.url = url;
+    this.offset = offset;
 
     this.sort();
+
+    this.addEventListeners();
   }
 
   sort () {
@@ -24,8 +28,8 @@ export default class SortableTable extends SortableTableV1.default {
     }
   }
 
-  sortOnClient() {
-    return super.sort(this.sorted.id, this.sorted.order);
+  sortOnClient(id = this.sorted.id, order = this.sorted.order) {
+    super.sort(id, order);
   }
 
   sortOnServer() {
@@ -33,24 +37,25 @@ export default class SortableTable extends SortableTableV1.default {
   }
 
   setSort(fieldValue, orderValue) {
-    this.sorted.id = fieldValue;
-    this.sorted.order = orderValue;
+    this.sorted.id = fieldValue ?? this.sorted.id;
+    this.sorted.order = orderValue ?? this.sorted.order;
   }
 
-  setEventListeners(elements = this.subElements.header.children) {
-    Array.from(elements).forEach((element) => {
-      element.addEventListener('pointerdown', this.handleHeaderCellPointerdown);
-    });
+  addEventListeners() {
+    this.subElements.header.addEventListener('pointerdown', this.handleHeaderCellPointerdown);
   }
 
-  removeEventListeners(elements = this.subElements.header.children) {
-    Array.from(elements).forEach((element) => {
-      element.removeEventListener('pointerdown', this.handleHeaderCellPointerdown);
-    });
+  removeEventListeners() {
+    this.subElements.header.removeEventListener('pointerdown', this.handleHeaderCellPointerdown);
   }
 
   handleHeaderCellPointerdown = (event) => {
     const cell = event.target.closest('.sortable-table__cell');
+
+    if (!cell) {
+      return;
+    }
+
     const fieldValue = cell.getAttribute('data-id');
     const orderValue = cell.getAttribute('data-order') === 'asc' ? 'desc' : 'asc';
     const sortableValue = cell.getAttribute('data-sortable');
@@ -60,13 +65,13 @@ export default class SortableTable extends SortableTableV1.default {
 
       this.setSort(fieldValue, orderValue);
   
-      this.sort();
+      this.sort(this.sorted.id, this.sorted.order);
     }
   }
 
   destroy() {
-    this.removeEventListeners();
-
     this.remove();
+
+    this.removeEventListeners();
   }
 }
